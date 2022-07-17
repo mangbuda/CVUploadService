@@ -397,7 +397,7 @@ namespace CVUploadService
                     value.Close();
                     return dt;
                 }
-                else
+                else if (Path.GetExtension(key) == ".xlsx")
                 {
                     using (var package = new ExcelPackage(value))
                     {
@@ -414,6 +414,33 @@ namespace CVUploadService
                         return dt;
 
                     }
+                }
+                else
+                {
+                    StreamReader reader = new StreamReader(UploadQueue + key);
+                    string line = reader.ReadLine();
+
+                    DataRow row;
+                    string[] txtValue = line.Split(',');
+
+                    foreach (string dc in txtValue)
+                    {
+                        dt.Columns.Add(new DataColumn(dc));
+                    }
+
+                    while (!reader.EndOfStream)
+                    {
+                        txtValue = reader.ReadLine().Split(',');
+
+                        if (txtValue.Length == dt.Columns.Count)
+                        {
+                            row = dt.NewRow();
+                            row.ItemArray = txtValue;
+                            dt.Rows.Add(row);
+                        }
+
+                    }
+                    return dt;
                 }
             }
             catch (Exception ex)
