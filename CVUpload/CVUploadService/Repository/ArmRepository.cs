@@ -256,6 +256,11 @@ namespace CVUploadService
                 propertyName = Enum.GetName(typeof(KeyNames), 3);
 
             }
+            else if (Key == 4)
+            {
+                propertyName = Enum.GetName(typeof(KeyNames), 4);
+
+            }
 
 
             string location = "";

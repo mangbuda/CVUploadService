@@ -8,6 +8,6 @@ namespace CVUploadService.Model
 {
     class Keys
     {
-        public enum KeyNames { UploadTimeInterval, UploadQueue, UploadCompletePath , UploadLogFile }
+        public enum KeyNames { UploadTimeInterval, UploadQueue, UploadCompletePath , UploadLogFile, RejectedFile }
     }
 }
