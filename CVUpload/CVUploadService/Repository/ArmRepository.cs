@@ -264,7 +264,9 @@ namespace CVUploadService
 
 
             string location = "";
-            string sourceTableQuery = "Select PropertyValue from [SystemGlobalProperties] WHERE [PropertyName] = @propertyName";
+            //string sourceTableQuery = "Select PropertyValue from [SystemGlobalProperties] WHERE [PropertyName] = @propertyName";
+            string sourceTableQuery = "select [dbo].[fnGlobalProperty](@propertyName) AS PropertyValue";
+
             try
             {
                 _connectionDB.con.Open();
@@ -272,12 +274,14 @@ namespace CVUploadService
                 {
                     cmd.Parameters.AddWithValue("@propertyName", propertyName);
 
-                    var dr = cmd.ExecuteReader();
-                    if (dr.Read()) // Read() returns TRUE if there are records to read, or FALSE if there is nothing
-                    {
-                        location = dr["PropertyValue"].ToString();
+                    //var dr = cmd.ExecuteReader();
+                    location = (string)cmd.ExecuteScalar();
 
-                    }
+                    //if (dr.Read()) // Read() returns TRUE if there are records to read, or FALSE if there is nothing
+                    //{
+                    //    location = dr["PropertyValue"].ToString();
+
+                    //}
 
                 }
                 _connectionDB.con.Close();
