@@ -42,18 +42,26 @@ namespace CVUploadService
         }
         public Dictionary<string, Stream> FileRead()
         {
-            var streamList = new Dictionary<string, Stream>();
-            foreach (string txtName in Directory.GetFiles(UploadQueue))
+            try
             {
-                streamList.Add(Path.GetFileName(txtName), new StreamReader(txtName).BaseStream);
+                var streamList = new Dictionary<string, Stream>();
+                foreach (string txtName in Directory.GetFiles(UploadQueue))
+                {
+                    streamList.Add(Path.GetFileName(txtName), new StreamReader(txtName).BaseStream);
+                }
+                return streamList;
+            }            
+            catch(Exception ex)
+            {
+                _logger.Log("FileRead Exception :" + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                return null;
             }
-            return streamList;
         }
         private static readonly object Mylock = new object();
         public void FileParse(object sender, System.Timers.ElapsedEventArgs e)
         {
             if (!Monitor.TryEnter(Mylock, 0)) return;
-
+            string isValid = "";
             UploadQueue = _iArmRepo.GetFileLocation(1);
             if (!UploadQueue.EndsWith("\\"))
             {
@@ -83,33 +91,52 @@ namespace CVUploadService
             foreach (var file in stringData)
             {
                 string path = UploadQueue + file.Key;
-                string isValid = _iArmService.IsValidFile(path);
+                isValid = _iArmService.IsValidFile(path);
                 if (isValid == "" || isValid == string.Empty)
                 {
                     DataTable dt = GetFileData(file.Key, file.Value);
+                    _logger.Log("File converted to Datatable Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                     if (dt != null)
                     {
 
                         int isExists = _iArmRepo.CheckTableExists(Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")));
+                        _logger.Log("Check Table Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                         if (isExists > 0)
                         {
+                            _logger.Log("Table Already Exsist. Insert In If Condition!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                             var result = _iArmRepo.TruncateTable(Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")), temTableNamePrefix1);
+                            _logger.Log("Truncate Table Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                             if (result == 1)
                             {
                                 result = _iArmRepo.AddBulkData(dt, Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")));
+                                _logger.Log("Insert Bulk Data Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                 if (result == 1)
                                 {
                                     createFileStore(file);
+                                    _logger.Log("Insert FileStore Data Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                     string insertSql = GetSQLFromMapping(Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")));
+                                    _logger.Log("Get Sql Mapping Data Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                     if (insertSql != "")
                                     {
                                         string destinationTableName = _iArmRepo.GetDestinationTableName(temTableNamePrefix1 + Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")));
+                                        _logger.Log("Get Destination Data Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                         if (destinationTableName != "")
                                         {
                                             result = _iArmRepo.TruncateTable(destinationTableName);
+                                            _logger.Log("Destination Table Data Truncate Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                             if (result == 1)
                                             {
                                                 result = _iArmRepo.InsertDestinationTable(insertSql);
+                                                _logger.Log("Destination Table Data Insert Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                             }
                                         }
                                     }
@@ -121,24 +148,42 @@ namespace CVUploadService
                         else if (isExists == -1) break;
                         else
                         {
+                            _logger.Log("Table not Exsist. Insert In else Condition!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                             string createTableSQL = BuildCreateTableScript(dt, Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")), temTableNamePrefix1);
+                            if (createTableSQL == null)
+                                return;
                             var result = _iArmRepo.SchemeCreate(createTableSQL);
+                            _logger.Log("Schema Created Successfully!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                             if (result == 1)
                             {
                                 _iArmRepo.AddBulkData(dt, Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")));
+                                _logger.Log("Bulk Data Insert Successfully!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                 if (result == 1)
                                 {
                                     createFileStore(file);
+                                    _logger.Log("Insert FileStore Data Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                     string insertSql = GetSQLFromMapping(file.Key.Replace(" ", "_"));
+                                    _logger.Log("Get Sql Mapping Data Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                     if (insertSql != "")
                                     {
                                         string destinationTableName = _iArmRepo.GetDestinationTableName(temTableNamePrefix1 + Path.GetFileNameWithoutExtension(UploadQueue + file.Key.Replace(" ", "_")));
+                                        _logger.Log("Get Destination Data Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                         if (destinationTableName != "")
                                         {
                                             result = _iArmRepo.TruncateTable(destinationTableName);
+                                            _logger.Log("Destination Table Data Truncate Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                             if (result == 1)
                                             {
                                                 result = _iArmRepo.InsertDestinationTable(insertSql);
+                                                _logger.Log("Destination Table Data Insert Successful!", UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+
                                             }
                                         }
                                     }
@@ -154,6 +199,10 @@ namespace CVUploadService
                         RemoveFilesFromFolder(file);
                         DeleteFilesFromFolder(file);
                     }
+                }
+                else
+                {
+                    _logger.Log("File Type Exception :" + isValid, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                 }
             }
 
@@ -349,43 +398,49 @@ namespace CVUploadService
             _iArmRepo.SaveFile(xFile);
         }
 
-        public static string BuildCreateTableScript(DataTable Table, string tableName, string temTableNamePrefix)
+        public string BuildCreateTableScript(DataTable Table, string tableName, string temTableNamePrefix)
         {
-
-            StringBuilder result = new StringBuilder();
-
-
-            result.AppendFormat("CREATE TABLE [{0}] ( ", temTableNamePrefix + tableName);
-
-            result.AppendFormat("[{0}] {1} {2} {3} {4}",
-                    "ImportID", // 0
-                    "[INT] ", // 1
-                    "IDENTITY(1,1)",//2
-                    "NOT NULL", // 3
-                    Environment.NewLine // 4
-                );
-            result.Append("   ,");
-            bool FirstTime = true;
-            foreach (DataColumn column in Table.Columns.OfType<DataColumn>())
+            try
             {
-                if (FirstTime) FirstTime = false;
-                else
-                    result.Append("   ,");
+                StringBuilder result = new StringBuilder();
 
-                result.AppendFormat("[{0}] {1} {2} {3}",
-                    column.ColumnName.Trim(), // 0
-                    GetSQLTypeAsString(column.DataType), // 1
-                    column.AllowDBNull ? "NULL" : "NOT NULL", // 2
-                    Environment.NewLine // 3
-                );
+
+                result.AppendFormat("CREATE TABLE [{0}] ( ", temTableNamePrefix + tableName);
+
+                result.AppendFormat("[{0}] {1} {2} {3} {4}",
+                        "ImportID", // 0
+                        "[INT] ", // 1
+                        "IDENTITY(1,1)",//2
+                        "NOT NULL", // 3
+                        Environment.NewLine // 4
+                    );
+                result.Append("   ,");
+                bool FirstTime = true;
+                foreach (DataColumn column in Table.Columns.OfType<DataColumn>())
+                {
+                    if (FirstTime) FirstTime = false;
+                    else
+                        result.Append("   ,");
+
+                    result.AppendFormat("[{0}] {1} {2} {3}",
+                        column.ColumnName.Trim(), // 0
+                        GetSQLTypeAsString(column.DataType), // 1
+                        column.AllowDBNull ? "NULL" : "NOT NULL", // 2
+                        Environment.NewLine // 3
+                    );
+                }
+                result.AppendFormat(") ON [PRIMARY]{0}", Environment.NewLine);
+
+                // Build an ALTER TABLE script that adds keys to a table that already exists.
+                if (Table.PrimaryKey.Length > 0)
+                    result.Append(BuildKeysScript(Table));
+                return result.ToString();
             }
-            result.AppendFormat(") ON [PRIMARY]{0}", Environment.NewLine);
-
-            // Build an ALTER TABLE script that adds keys to a table that already exists.
-            if (Table.PrimaryKey.Length > 0)
-                result.Append(BuildKeysScript(Table));
-
-            return result.ToString();
+            catch(Exception ex)
+            {
+                _logger.Log("BuildCreateTableScript: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                return null;
+            }
         }
 
         /// <summary>

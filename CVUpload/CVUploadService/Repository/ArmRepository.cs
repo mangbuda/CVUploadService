@@ -89,7 +89,7 @@ namespace CVUploadService
             }
             catch (Exception ex)
             {
-                _logger.Log("AddBulkData Exception: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                _logger.Log("AddBulkData Exception: " + ex.Message + " Table Name/FileName " + tableName, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                 //throw ex;
                 return -1;
             }
@@ -123,7 +123,7 @@ namespace CVUploadService
             }
             catch (Exception ex)
             {
-                _logger.Log("CheckTableExists Exception: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                _logger.Log("CheckTableExists Exception: " + ex.Message + " Table Name/FileName: " + Tablename, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                 //throw ex;
                 return -1;
             }
@@ -161,7 +161,7 @@ namespace CVUploadService
             }
             catch (Exception ex)
             {
-                _logger.Log("SaveFile Exception: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                _logger.Log("SaveFile Exception: " + ex.Message + " Table Name/FileName: " + file.FileName, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                 //throw ex;
                 return -1;
             }
@@ -222,7 +222,7 @@ namespace CVUploadService
             }
             catch (Exception ex)
             {
-                _logger.Log("TruncateTable Exception: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                _logger.Log("TruncateTable Exception: " + ex.Message + " Table Name/FileName: " + tableName, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                 //throw ex;
                 return -1;
             }
@@ -333,7 +333,7 @@ namespace CVUploadService
             }
             catch (Exception ex)
             {
-                _logger.Log("GetSqlFromMappingConfig Exception: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                _logger.Log("GetSqlFromMappingConfig Exception: " + ex.Message + " Table Name/FileName: " + temTableNamePrefix1 + key, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
 
                 return "";
             }
@@ -397,7 +397,7 @@ namespace CVUploadService
             }
             catch (Exception ex)
             {
-                _logger.Log("GetDestinationTableName Exception: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                _logger.Log("GetDestinationTableName Exception: " + ex.Message + " Table Name/FileName: " + defaultSchema + sourceTableName, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                 //throw ex;
                 return "";
             }
@@ -427,7 +427,7 @@ namespace CVUploadService
             }
             catch (Exception ex)
             {
-                _logger.Log("TruncateTable Exception: " + ex.Message, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
+                _logger.Log("TruncateTable Exception: " + ex.Message + " Table Name/FileName: " + TableName, UploadLogFile.Replace("DDMMYY", DateTime.Now.ToString("ddMMyy")));
                 //throw ex;
                 return -1;
             }
